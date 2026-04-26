@@ -4,10 +4,12 @@ import BookEditor from '@/components/BookEditor';
 import CharactersPanel from '@/components/CharactersPanel';
 import WorldBuilder from '@/components/WorldBuilder';
 import Library from '@/components/Library';
-import CoverEditor from '@/components/CoverEditor';
 import AIAssistant from '@/components/AIAssistant';
+import ProfileScreen from '@/components/ProfileScreen';
+import BookReader from '@/components/BookReader';
+import { BOOKS, type Book } from '@/data/books';
 
-type Tab = 'library' | 'editor' | 'characters' | 'world' | 'cover' | 'ai';
+type Tab = 'library' | 'editor' | 'ai' | 'characters' | 'world' | 'profile';
 
 const TABS: { id: Tab; label: string; icon: string; color: string }[] = [
   { id: 'library', label: 'Книги', icon: 'BookOpen', color: '#60a5fa' },
@@ -15,12 +17,27 @@ const TABS: { id: Tab; label: string; icon: string; color: string }[] = [
   { id: 'ai', label: 'AI', icon: 'Sparkles', color: '#f472b6' },
   { id: 'characters', label: 'Герои', icon: 'Users', color: '#d946ef' },
   { id: 'world', label: 'Мир', icon: 'Globe', color: '#10b981' },
-  { id: 'cover', label: 'Обложка', icon: 'Image', color: '#8b5cf6' },
+  { id: 'profile', label: 'Профиль', icon: 'User', color: '#f0a832' },
 ];
+
+const TAB_TITLES: Record<Tab, string> = {
+  library: 'Библиотека',
+  editor: 'Редактор',
+  ai: 'AI-помощник',
+  characters: 'Персонажи',
+  world: 'Конструктор мира',
+  profile: 'Мой профиль',
+};
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState<Tab>('library');
+  const [readingBook, setReadingBook] = useState<Book | null>(null);
   const currentTab = TABS.find(t => t.id === activeTab)!;
+
+  // Full-screen reader overlay
+  if (readingBook) {
+    return <BookReader book={readingBook} onClose={() => setReadingBook(null)} />;
+  }
 
   return (
     <div
@@ -30,9 +47,9 @@ export default function Index() {
       {/* Ambient glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-0 left-0 w-64 h-64 rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, #f0a832, transparent)', opacity: 0.06 }} />
+          style={{ background: 'radial-gradient(circle, #f0a832, transparent)', opacity: 0.05 }} />
         <div className="absolute bottom-24 right-0 w-56 h-56 rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, #d946ef, transparent)', opacity: 0.06 }} />
+          style={{ background: 'radial-gradient(circle, #d946ef, transparent)', opacity: 0.05 }} />
       </div>
 
       {/* Header */}
@@ -46,7 +63,7 @@ export default function Index() {
           </div>
           <div>
             <span className="font-display text-base font-semibold text-shimmer block leading-none">Сказочник</span>
-            <span className="text-[10px] text-muted-foreground font-body leading-none">Пепел Звёздного Тракта</span>
+            <span className="text-[10px] text-muted-foreground font-body leading-none">Твоя творческая студия</span>
           </div>
         </div>
 
@@ -55,9 +72,12 @@ export default function Index() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Сохранено
           </div>
-          <div className="w-8 h-8 rounded-full bg-gold/20 border border-gold/30 flex items-center justify-center text-gold text-xs font-bold font-display">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className="w-8 h-8 rounded-full bg-gold/20 border border-gold/30 flex items-center justify-center text-gold text-xs font-bold font-display active:scale-95 transition-all"
+          >
             А
-          </div>
+          </button>
         </div>
       </header>
 
@@ -70,19 +90,35 @@ export default function Index() {
           <Icon name={currentTab.icon} size={14} style={{ color: currentTab.color }} />
         </div>
         <h1 className="font-display text-xl leading-none" style={{ color: currentTab.color }}>
-          {currentTab.id === 'ai' ? 'AI-помощник' : currentTab.label}
+          {TAB_TITLES[activeTab]}
         </h1>
+
+        {/* Cover editor link in editor */}
+        {activeTab === 'editor' && (
+          <button
+            onClick={() => {/* открыть cover */}}
+            className="ml-auto px-2.5 py-1 rounded-lg glass border border-violet/20 text-violet text-[10px] font-body flex items-center gap-1"
+          >
+            <Icon name="Image" size={10} />
+            Обложка
+          </button>
+        )}
       </div>
 
-      {/* Content area - scrollable, with padding for bottom nav */}
-      <main className="relative z-10 flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(72px + max(8px, env(safe-area-inset-bottom)))' }}>
+      {/* Content area */}
+      <main
+        className="relative z-10 flex-1 overflow-y-auto"
+        style={{ paddingBottom: 'calc(72px + max(8px, env(safe-area-inset-bottom)))' }}
+      >
         <div className="p-4">
           {activeTab === 'library' && <Library />}
           {activeTab === 'editor' && <BookEditor />}
           {activeTab === 'characters' && <CharactersPanel />}
           {activeTab === 'world' && <WorldBuilder />}
-          {activeTab === 'cover' && <CoverEditor />}
           {activeTab === 'ai' && <AIAssistant />}
+          {activeTab === 'profile' && (
+            <ProfileScreen books={BOOKS} onReadBook={(book) => setReadingBook(book)} />
+          )}
         </div>
       </main>
 
@@ -117,16 +153,10 @@ export default function Index() {
                   transform: isActive ? 'scale(1.08)' : 'scale(1)',
                 }}
               >
-                <Icon
-                  name={tab.icon}
-                  size={20}
-                  style={{ color: isActive ? tab.color : 'rgba(255,255,255,0.3)' }}
-                />
+                <Icon name={tab.icon} size={20} style={{ color: isActive ? tab.color : 'rgba(255,255,255,0.3)' }} />
               </div>
-              <span
-                className="text-[9px] font-body leading-none transition-all"
-                style={{ color: isActive ? tab.color : 'rgba(255,255,255,0.25)' }}
-              >
+              <span className="text-[9px] font-body leading-none transition-all"
+                style={{ color: isActive ? tab.color : 'rgba(255,255,255,0.25)' }}>
                 {tab.label}
               </span>
             </button>
