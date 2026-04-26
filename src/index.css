@@ -72,6 +72,24 @@ body::before {
   opacity: 0.3;
 }
 
+/* Hide scrollbar for horizontal rows */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Touch optimization */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+a {
+  touch-action: manipulation;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 4px;

@@ -9,13 +9,22 @@ type Message = {
 };
 
 const PROMPTS = [
-  { icon: '⚡', label: 'Драматичная сцена', prompt: 'Напиши драматичную сцену столкновения двух персонажей' },
-  { icon: '💬', label: 'Диалог', prompt: 'Создай живой диалог с конфликтом и подтекстом' },
-  { icon: '🌍', label: 'Описание мира', prompt: 'Опиши локацию с деталями и атмосферой' },
-  { icon: '🎭', label: 'Поворот сюжета', prompt: 'Придумай неожиданный поворот истории' },
-  { icon: '✨', label: 'Улучшить текст', prompt: 'Улучши этот отрывок: сделай его ярче и выразительнее' },
-  { icon: '👤', label: 'Биография', prompt: 'Придумай предысторию для персонажа с тайнами и травмами' },
+  { icon: '⚡', label: 'Сцена' },
+  { icon: '💬', label: 'Диалог' },
+  { icon: '🌍', label: 'Локация' },
+  { icon: '🎭', label: 'Поворот' },
+  { icon: '✨', label: 'Улучшить' },
+  { icon: '👤', label: 'Биография' },
 ];
+
+const PROMPT_TEXTS: Record<string, string> = {
+  'Сцена': 'Напиши драматичную сцену столкновения двух персонажей',
+  'Диалог': 'Создай живой диалог с конфликтом и подтекстом',
+  'Локация': 'Опиши локацию с деталями и атмосферой',
+  'Поворот': 'Придумай неожиданный поворот истории',
+  'Улучшить': 'Улучши этот отрывок: сделай его ярче и выразительнее',
+  'Биография': 'Придумай предысторию для персонажа с тайнами и травмами',
+};
 
 const AI_RESPONSES = [
   `Северный ветер нёс запах грозы, когда она впервые увидела его лицо в отражении тёмных вод. Не лицо врага — лицо зеркала...
@@ -70,22 +79,15 @@ export default function AIAssistant() {
     }, 18);
   };
 
-  const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(input);
-    }
-  };
-
   return (
-    <div className="flex flex-col h-full gap-4">
+    <div className="flex flex-col gap-3" style={{ minHeight: 'calc(100dvh - 220px)' }}>
       {/* Quick prompts */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
         {PROMPTS.map((p) => (
           <button
             key={p.label}
-            onClick={() => sendMessage(p.prompt)}
-            className="px-3 py-1.5 rounded-xl glass border border-border/40 text-xs font-body text-foreground/70 hover:text-foreground hover:border-gold/20 hover:bg-gold/5 transition-all flex items-center gap-1.5"
+            onClick={() => sendMessage(PROMPT_TEXTS[p.label])}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl glass border border-border/40 text-xs font-body text-foreground/70 flex-shrink-0 active:bg-gold/10 transition-all"
           >
             <span>{p.icon}</span>
             {p.label}
@@ -94,15 +96,14 @@ export default function AIAssistant() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-2">
+      <div className="flex flex-col gap-3">
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex gap-3 animate-fade-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+            className={`flex gap-2.5 animate-fade-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
-            {/* Avatar */}
             <div
-              className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm ${
+              className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${
                 msg.role === 'ai'
                   ? 'bg-violet/20 border border-violet/30 text-violet'
                   : 'bg-gold/20 border border-gold/30 text-gold'
@@ -111,9 +112,8 @@ export default function AIAssistant() {
               {msg.role === 'ai' ? <Icon name="Sparkles" size={14} /> : <Icon name="User" size={14} />}
             </div>
 
-            {/* Bubble */}
             <div
-              className={`max-w-[75%] p-4 rounded-2xl text-sm font-body leading-relaxed ${
+              className={`max-w-[80%] p-3.5 rounded-2xl text-sm font-body leading-relaxed ${
                 msg.role === 'ai'
                   ? 'glass border border-border/40 text-foreground/90 rounded-tl-sm'
                   : 'bg-gold/10 border border-gold/20 text-foreground rounded-tr-sm'
@@ -124,15 +124,12 @@ export default function AIAssistant() {
                 {msg.typing && <span className="inline-block w-0.5 h-4 bg-violet ml-0.5 animate-pulse" />}
               </div>
               {!msg.typing && msg.role === 'ai' && msg.id !== 0 && (
-                <div className="mt-3 pt-3 border-t border-border/30 flex gap-2">
-                  <button className="text-xs text-muted-foreground hover:text-gold transition-colors flex items-center gap-1">
-                    <Icon name="Copy" size={10} /> Скопировать
+                <div className="mt-2.5 pt-2.5 border-t border-border/30 flex gap-3">
+                  <button className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Icon name="Copy" size={10} /> Копировать
                   </button>
-                  <button className="text-xs text-muted-foreground hover:text-violet transition-colors flex items-center gap-1">
+                  <button className="text-xs text-muted-foreground flex items-center gap-1">
                     <Icon name="RefreshCw" size={10} /> Переписать
-                  </button>
-                  <button className="text-xs text-muted-foreground hover:text-magenta transition-colors flex items-center gap-1">
-                    <Icon name="Plus" size={10} /> В редактор
                   </button>
                 </div>
               )}
@@ -141,7 +138,7 @@ export default function AIAssistant() {
         ))}
 
         {isTyping && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground font-body animate-fade-in">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground font-body">
             <div className="flex gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-violet animate-bounce" style={{ animationDelay: '0ms' }} />
               <span className="w-1.5 h-1.5 rounded-full bg-violet animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -153,24 +150,22 @@ export default function AIAssistant() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="glass-gold rounded-2xl p-3 border border-gold/15">
+      {/* Input — sticky at bottom */}
+      <div className="glass-gold rounded-2xl p-3 border border-gold/15 mt-2">
         <textarea
           className="w-full bg-transparent text-sm font-body text-foreground placeholder:text-muted-foreground outline-none resize-none leading-relaxed"
-          placeholder="Опиши, что написать — сцену, диалог, описание..."
+          placeholder="Опиши, что написать..."
           rows={2}
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKey}
         />
-        <div className="flex justify-between items-center mt-2">
-          <span className="text-xs text-muted-foreground font-body">Enter — отправить · Shift+Enter — новая строка</span>
+        <div className="flex justify-end mt-2">
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || isTyping}
-            className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-gold to-magenta text-ink font-body text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-all flex items-center gap-1.5"
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-gold to-magenta text-ink font-body text-sm font-semibold disabled:opacity-40 active:opacity-80 transition-all flex items-center gap-2"
           >
-            <Icon name="Send" size={13} />
+            <Icon name="Send" size={14} />
             Отправить
           </button>
         </div>
